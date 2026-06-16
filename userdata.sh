@@ -9,9 +9,11 @@ apt-get upgrade -y
 apt-get install -y wireguard wireguard-tools iptables iptables-persistent fail2ban
 
 # Enable IP forwarding for IPv4 and IPv6
-echo "net.ipv4.ip_forward=1" >> /etc/sysctl.conf
-echo "net.ipv6.conf.all.forwarding=1" >> /etc/sysctl.conf
-sysctl -p
+echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf
+echo "net.ipv6.conf.all.forwarding = 1" >> /etc/sysctl.conf
+sysctl -w net.ipv4.ip_forward=1
+sysctl -w net.ipv6.conf.all.forwarding=1
+sysctl --system
 
 # Create WireGuard configuration
 cat > /etc/wireguard/wg0.conf <<'WGCONF'
@@ -19,8 +21,8 @@ cat > /etc/wireguard/wg0.conf <<'WGCONF'
 Address = 10.0.100.1/24
 ListenPort = ${wg_server_port}
 PrivateKey = ${wg_server_private_key}
-PostUp = ETH=$(ip route | awk '/default/ {print $5; exit}'); iptables -A FORWARD -i wg0 -j ACCEPT; iptables -t nat -A POSTROUTING -o $ETH -j MASQUERADE; iptables -t nat -A PREROUTING -i $ETH -p tcp --dport 6881 -j DNAT --to-destination 10.0.100.2:6881; iptables -t nat -A PREROUTING -i $ETH -p udp --dport 6881 -j DNAT --to-destination 10.0.100.2:6881; ip6tables -A FORWARD -i wg0 -j ACCEPT; ip6tables -t nat -A POSTROUTING -o $ETH -j MASQUERADE
-PostDown = ETH=$(ip route | awk '/default/ {print $5; exit}'); iptables -D FORWARD -i wg0 -j ACCEPT; iptables -t nat -D POSTROUTING -o $ETH -j MASQUERADE; iptables -t nat -D PREROUTING -i $ETH -p tcp --dport 6881 -j DNAT --to-destination 10.0.100.2:6881; iptables -t nat -D PREROUTING -i $ETH -p udp --dport 6881 -j DNAT --to-destination 10.0.100.2:6881; ip6tables -D FORWARD -i wg0 -j ACCEPT; ip6tables -t nat -D POSTROUTING -o $ETH -j MASQUERADE
+PostUp = ETH=$(ip route | awk '/default/ {print $5; exit}'); iptables -A FORWARD -i wg0 -j ACCEPT; iptables -A FORWARD -o wg0 -j ACCEPT; iptables -t nat -A POSTROUTING -o $ETH -j MASQUERADE; iptables -t nat -A PREROUTING -i $ETH -p tcp --dport 6881 -j DNAT --to-destination 10.0.100.2:6881; iptables -t nat -A PREROUTING -i $ETH -p udp --dport 6881 -j DNAT --to-destination 10.0.100.2:6881; ip6tables -A FORWARD -i wg0 -j ACCEPT; ip6tables -t nat -A POSTROUTING -o $ETH -j MASQUERADE
+PostDown = ETH=$(ip route | awk '/default/ {print $5; exit}'); iptables -D FORWARD -i wg0 -j ACCEPT; iptables -D FORWARD -o wg0 -j ACCEPT; iptables -t nat -D POSTROUTING -o $ETH -j MASQUERADE; iptables -t nat -D PREROUTING -i $ETH -p tcp --dport 6881 -j DNAT --to-destination 10.0.100.2:6881; iptables -t nat -D PREROUTING -i $ETH -p udp --dport 6881 -j DNAT --to-destination 10.0.100.2:6881; ip6tables -D FORWARD -i wg0 -j ACCEPT; ip6tables -t nat -D POSTROUTING -o $ETH -j MASQUERADE
 
 [Peer]
 PublicKey = ${wg_client_public_key}
