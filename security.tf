@@ -62,6 +62,19 @@ resource "aws_vpc_security_group_ingress_rule" "qbittorrent_tcp" {
   }
 }
 
+resource "aws_vpc_security_group_ingress_rule" "qbittorrent_udp" {
+  security_group_id = aws_security_group.vpn.id
+
+  from_port   = 6881
+  to_port     = 6881
+  ip_protocol = "udp"
+  cidr_ipv4   = "0.0.0.0/0"
+
+  tags = {
+    Name = "qbittorrent-udp"
+  }
+}
+
 resource "aws_vpc_security_group_egress_rule" "all_outbound" {
   security_group_id = aws_security_group.vpn.id
 
