@@ -1,19 +1,26 @@
 #!/bin/bash
-set -euo pipefail
+
+export DEBIAN_FRONTEND=noninteractive
 
 # Update system packages
-apt-get update
-apt-get upgrade -y
+apt-get update -y
+apt-get upgrade -y -o Dpkg::Options::="--force-confold"
 
 # Install WireGuard, iptables, and fail2ban
 apt-get install -y wireguard wireguard-tools iptables iptables-persistent fail2ban
 
-# Enable IP forwarding for IPv4 and IPv6
-echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf
-echo "net.ipv6.conf.all.forwarding = 1" >> /etc/sysctl.conf
+# Enable IP forwarding — write to sysctl.d so it survives reboot and takes priority
+cat > /etc/sysctl.d/99-ip-forward.conf <<EOF
+net.ipv4.ip_forward = 1
+net.ipv6.conf.all.forwarding = 1
+EOF
+
+# Apply immediately
 sysctl -w net.ipv4.ip_forward=1
 sysctl -w net.ipv6.conf.all.forwarding=1
-sysctl --system
+
+# Verify (logged to cloud-init output)
+sysctl net.ipv4.ip_forward >> /var/log/cloud-init-output.log
 
 # Create WireGuard configuration
 cat > /etc/wireguard/wg0.conf <<'WGCONF'
