@@ -1,0 +1,27 @@
+# Terraform state files
+*.tfstate
+*.tfstate.backup
+.terraform.lock.hcl
+
+# Terraform directories
+.terraform/
+
+# Sensitive files
+*.key
+terraform.tfvars
+.env
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+#prompts and AI stuff
+*prompt.mdwg-vpn-client.conf
+wg-vpn-client.conf
